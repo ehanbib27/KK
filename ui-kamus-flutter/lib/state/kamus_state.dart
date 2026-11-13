@@ -8,40 +8,114 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/category_item.dart';
 import '../models/dictionary_entry.dart';
 
+class _ParsedDictionaryData {
+  const _ParsedDictionaryData({
+    required this.entries,
+    required this.categories,
+    required this.entriesById,
+    required this.categoriesById,
+    required this.categoryCounts,
+    required this.availableLetters,
+    required this.searchHaystacks,
+    required this.firstLetters,
+  });
+
+  final List<DictionaryEntry> entries;
+  final List<CategoryItem> categories;
+  final Map<String, DictionaryEntry> entriesById;
+  final Map<String, CategoryItem> categoriesById;
+  final Map<String, int> categoryCounts;
+  final List<String> availableLetters;
+  final List<String> searchHaystacks;
+  final List<String> firstLetters;
+}
+
+_ParsedDictionaryData _parseDictionaryData((String, String) raw) {
+  final wordsJson = jsonDecode(raw.$1) as List<dynamic>;
+  final categoriesJson = jsonDecode(raw.$2) as List<dynamic>;
+
+  final entries = wordsJson
+      .whereType<Map<String, dynamic>>()
+      .map(DictionaryEntry.fromJson)
+      .toList()
+    ..sort((a, b) => a.word.toLowerCase().compareTo(b.word.toLowerCase()));
+  final categories = categoriesJson
+      .whereType<Map<String, dynamic>>()
+      .map(CategoryItem.fromJson)
+      .toList();
+
+  final entriesById = <String, DictionaryEntry>{};
+  final categoryCounts = <String, int>{};
+  final letterSet = <String>{};
+  final searchHaystacks = List<String>.filled(entries.length, '');
+  final firstLetters = List<String>.filled(entries.length, '');
+
+  for (var i = 0; i < entries.length; i++) {
+    final entry = entries[i];
+    entriesById[entry.id] = entry;
+    categoryCounts[entry.categoryId] = (categoryCounts[entry.categoryId] ?? 0) + 1;
+    final letter = entry.word.isEmpty ? '' : entry.word[0].toUpperCase();
+    if (letter.isNotEmpty) letterSet.add(letter);
+    firstLetters[i] = letter;
+    searchHaystacks[i] =
+        '${entry.word}\n${entry.meaning}\n${entry.example}\n${entry.translation}\n${entry.dialect}\n${entry.partOfSpeech}'
+            .toLowerCase();
+  }
+
+  final categoriesById = <String, CategoryItem>{
+    for (final category in categories) category.id: category,
+  };
+  final availableLetters = letterSet.toList()..sort();
+
+  return _ParsedDictionaryData(
+    entries: entries,
+    categories: categories,
+    entriesById: entriesById,
+    categoriesById: categoriesById,
+    categoryCounts: categoryCounts,
+    availableLetters: availableLetters,
+    searchHaystacks: searchHaystacks,
+    firstLetters: firstLetters,
+  );
+}
+
 class KamusState extends ChangeNotifier {
   List<DictionaryEntry> entries = [];
   List<CategoryItem> categories = [];
+  List<String> availableLetters = const [];
   Set<String> favoriteIds = {};
   List<String> historyIds = [];
   List<String> recentSearchIds = [];
   List<String> suggestions = [];
 
-  bool isDarkMode = false;
+  final ValueNotifier<bool> darkModeNotifier = ValueNotifier<bool>(false);
+  bool get isDarkMode => darkModeNotifier.value;
   String displayName = 'Penutur Kutai';
   String? profileImageBase64;
 
+  Map<String, DictionaryEntry> _entriesById = const {};
+  Map<String, CategoryItem> _categoriesById = const {};
+  Map<String, int> _categoryCounts = const {};
+  List<String> _searchHaystacks = const [];
+  List<String> _firstLetters = const [];
   SharedPreferences? _prefs;
 
   Future<void> load() async {
-    final wordsJson = jsonDecode(
-      await rootBundle.loadString('assets/data/kosakata_lengkap.json'),
-    ) as List<dynamic>;
-    final categoriesJson = jsonDecode(
-      await rootBundle.loadString('assets/data/kategori.json'),
-    ) as List<dynamic>;
+    final rawWords = await rootBundle.loadString('assets/data/kosakata_lengkap.json');
+    final rawCategories = await rootBundle.loadString('assets/data/kategori.json');
+    final parsed = await compute(_parseDictionaryData, (rawWords, rawCategories));
 
-    entries = wordsJson
-        .whereType<Map<String, dynamic>>()
-        .map(DictionaryEntry.fromJson)
-        .toList()
-      ..sort((a, b) => a.word.toLowerCase().compareTo(b.word.toLowerCase()));
-    categories = categoriesJson
-        .whereType<Map<String, dynamic>>()
-        .map(CategoryItem.fromJson)
-        .toList();
+    entries = parsed.entries;
+    categories = parsed.categories;
+    availableLetters = parsed.availableLetters;
+    _entriesById = parsed.entriesById;
+    _categoriesById = parsed.categoriesById;
+    _categoryCounts = parsed.categoryCounts;
+    _searchHaystacks = parsed.searchHaystacks;
+    _firstLetters = parsed.firstLetters;
 
     _prefs = await SharedPreferences.getInstance();
-    isDarkMode = _prefs?.getBool('dark_mode') ?? false;
+    darkModeNotifier.value = _prefs?.getBool('dark_mode') ?? false;
     displayName = _prefs?.getString('display_name') ?? 'Penutur Kutai';
     profileImageBase64 = _prefs?.getString('profile_image_base64');
     favoriteIds = (_prefs?.getStringList('favorite_ids') ?? <String>[]).toSet();
@@ -50,18 +124,35 @@ class KamusState extends ChangeNotifier {
     suggestions = _prefs?.getStringList('word_suggestions') ?? <String>[];
   }
 
-  DictionaryEntry? entryById(String id) {
-    for (final entry in entries) {
-      if (entry.id == id) return entry;
-    }
-    return null;
-  }
+  DictionaryEntry? entryById(String id) => _entriesById[id];
 
-  CategoryItem? categoryById(String id) {
-    for (final category in categories) {
-      if (category.id == id) return category;
+  CategoryItem? categoryById(String id) => _categoriesById[id];
+
+  int countForCategory(String categoryId) => _categoryCounts[categoryId] ?? 0;
+
+  List<DictionaryEntry> filterEntries({
+    String query = '',
+    String? categoryId,
+    String? letter,
+  }) {
+    final normalizedQuery = query.trim().toLowerCase();
+    final hasQuery = normalizedQuery.isNotEmpty;
+    final hasCategory = categoryId != null && categoryId.isNotEmpty;
+    final hasLetter = letter != null && letter.isNotEmpty;
+
+    if (!hasQuery && !hasCategory && !hasLetter) {
+      return entries;
     }
-    return null;
+
+    final result = <DictionaryEntry>[];
+    for (var i = 0; i < entries.length; i++) {
+      final entry = entries[i];
+      if (hasCategory && entry.categoryId != categoryId) continue;
+      if (hasLetter && _firstLetters[i] != letter) continue;
+      if (hasQuery && !_searchHaystacks[i].contains(normalizedQuery)) continue;
+      result.add(entry);
+    }
+    return result;
   }
 
   List<DictionaryEntry> get favorites =>
@@ -84,7 +175,7 @@ class KamusState extends ChangeNotifier {
   }
 
   Future<void> setDarkMode(bool value) async {
-    isDarkMode = value;
+    darkModeNotifier.value = value;
     await _prefs?.setBool('dark_mode', value);
     notifyListeners();
   }

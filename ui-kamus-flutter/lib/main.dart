@@ -57,15 +57,15 @@ class KamusKutaiApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: state,
-      builder: (context, _) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: state.darkModeNotifier,
+      builder: (context, isDarkMode, _) {
         return MaterialApp(
           title: 'Kamus Kutai',
           debugShowCheckedModeBanner: false,
           theme: AppTheme.light(),
           darkTheme: AppTheme.dark(),
-          themeMode: state.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          themeMode: isDarkMode ? ThemeMode.dark : ThemeMode.light,
           home: MainShell(state: state),
         );
       },

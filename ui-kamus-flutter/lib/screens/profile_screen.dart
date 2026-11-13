@@ -59,7 +59,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final colors = Theme.of(context).colorScheme;
     return Scaffold(
       appBar: AppBar(title: const Text('Profil', style: TextStyle(fontWeight: FontWeight.w800))),
-      body: ListView(
+      body: ListenableBuilder(
+        listenable: state,
+        builder: (context, _) => ListView(
         padding: const EdgeInsets.fromLTRB(18, 10, 18, 30),
         children: [
           const PageIntro(eyebrow: 'Ruang pribadi', title: 'Profil', subtitle: 'Preferensi lokal untuk pengalaman belajar Kamus Kutai.'),
@@ -123,6 +125,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 10),
           Text('Foto profil disimpan lokal pada perangkat/browser ini. Foto tidak diunggah ke server dan tidak otomatis tersinkron ke perangkat lain.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant, height: 1.5)),
         ],
+      ),
       ),
     );
   }

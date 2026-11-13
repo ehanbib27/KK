@@ -78,17 +78,25 @@ class _MainShellState extends State<MainShell> {
           ],
         ),
         actions: [
-          IconButton(
-            tooltip: state.isDarkMode ? 'Tema terang' : 'Tema gelap',
-            onPressed: () => state.setDarkMode(!state.isDarkMode),
-            icon: Icon(state.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: IconButton(
-              tooltip: 'Profil',
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ProfileScreen(state: state))),
-              icon: ProfileAvatar(state: state, radius: 18),
+          ListenableBuilder(
+            listenable: state,
+            builder: (context, _) => Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  tooltip: state.isDarkMode ? 'Tema terang' : 'Tema gelap',
+                  onPressed: () => state.setDarkMode(!state.isDarkMode),
+                  icon: Icon(state.isDarkMode ? Icons.light_mode_rounded : Icons.dark_mode_rounded),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: IconButton(
+                    tooltip: 'Profil',
+                    onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ProfileScreen(state: state))),
+                    icon: ProfileAvatar(state: state, radius: 18),
+                  ),
+                ),
+              ],
             ),
           ),
         ],

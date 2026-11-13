@@ -11,9 +11,12 @@ class HistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final items = state.history;
     final colors = Theme.of(context).colorScheme;
-    return Scaffold(
+    return ListenableBuilder(
+      listenable: state,
+      builder: (context, _) {
+        final items = state.history;
+        return Scaffold(
       appBar: AppBar(
         title: const Text('Riwayat penjelajahan', style: TextStyle(fontWeight: FontWeight.w800)),
         actions: [
@@ -39,6 +42,8 @@ class HistoryScreen extends StatelessWidget {
                 ));
               },
             ),
+    );
+      },
     );
   }
 }

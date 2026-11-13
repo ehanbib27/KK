@@ -34,7 +34,6 @@ class _DetailScreenState extends State<DetailScreen> {
     final state = widget.state;
     final colors = Theme.of(context).colorScheme;
     final category = state.categoryById(entry.categoryId)?.name ?? entry.categoryId;
-    final isFavorite = state.favoriteIds.contains(entry.id);
 
     return Scaffold(
       appBar: AppBar(
@@ -48,10 +47,16 @@ class _DetailScreenState extends State<DetailScreen> {
             },
             icon: const Icon(Icons.copy_all_rounded),
           ),
-          IconButton(
-            tooltip: isFavorite ? 'Hapus dari favorit' : 'Simpan ke favorit',
-            onPressed: () => state.toggleFavorite(entry.id),
-            icon: Icon(isFavorite ? Icons.bookmark_rounded : Icons.bookmark_border_rounded),
+          ListenableBuilder(
+            listenable: state,
+            builder: (context, _) {
+              final isFavorite = state.favoriteIds.contains(entry.id);
+              return IconButton(
+                tooltip: isFavorite ? 'Hapus dari favorit' : 'Simpan ke favorit',
+                onPressed: () => state.toggleFavorite(entry.id),
+                icon: Icon(isFavorite ? Icons.bookmark_rounded : Icons.bookmark_border_rounded),
+              );
+            },
           ),
           const SizedBox(width: 6),
         ],
@@ -118,10 +123,16 @@ class _DetailScreenState extends State<DetailScreen> {
             ),
           ),
           const SizedBox(height: 18),
-          FilledButton.icon(
-            onPressed: () => state.toggleFavorite(entry.id),
-            icon: Icon(isFavorite ? Icons.bookmark_remove_rounded : Icons.bookmark_add_rounded),
-            label: Text(isFavorite ? 'Hapus dari kata favorit' : 'Simpan ke kata favorit'),
+          ListenableBuilder(
+            listenable: state,
+            builder: (context, _) {
+              final isFavorite = state.favoriteIds.contains(entry.id);
+              return FilledButton.icon(
+                onPressed: () => state.toggleFavorite(entry.id),
+                icon: Icon(isFavorite ? Icons.bookmark_remove_rounded : Icons.bookmark_add_rounded),
+                label: Text(isFavorite ? 'Hapus dari kata favorit' : 'Simpan ke kata favorit'),
+              );
+            },
           ),
         ],
       ),

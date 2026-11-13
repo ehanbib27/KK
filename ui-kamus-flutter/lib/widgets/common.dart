@@ -180,7 +180,6 @@ class WordCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final category = state.categoryById(entry.categoryId)?.name ?? entry.categoryId;
-    final favorite = state.favoriteIds.contains(entry.id);
     return Card(
       margin: EdgeInsets.zero,
       child: InkWell(
@@ -225,13 +224,19 @@ class WordCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  IconButton(
-                    tooltip: favorite ? 'Hapus dari favorit' : 'Simpan ke favorit',
-                    onPressed: () => state.toggleFavorite(entry.id),
-                    icon: Icon(
-                      favorite ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
-                      color: favorite ? colors.primary : colors.onSurfaceVariant,
-                    ),
+                  ListenableBuilder(
+                    listenable: state,
+                    builder: (context, _) {
+                      final favorite = state.favoriteIds.contains(entry.id);
+                      return IconButton(
+                        tooltip: favorite ? 'Hapus dari favorit' : 'Simpan ke favorit',
+                        onPressed: () => state.toggleFavorite(entry.id),
+                        icon: Icon(
+                          favorite ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                          color: favorite ? colors.primary : colors.onSurfaceVariant,
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),

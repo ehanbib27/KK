@@ -24,7 +24,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
     super.dispose();
   }
 
-  int _count(CategoryItem category) => widget.state.entries.where((entry) => entry.categoryId == category.id).length;
+  int _count(CategoryItem category) => widget.state.countForCategory(category.id);
 
   @override
   Widget build(BuildContext context) {

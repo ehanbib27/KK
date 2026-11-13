@@ -24,8 +24,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   Widget build(BuildContext context) {
     final state = widget.state;
     final colors = Theme.of(context).colorScheme;
-    final items = _view == 'favorit' ? state.favorites : state.history;
-    return ListView(
+    return ListenableBuilder(
+      listenable: state,
+      builder: (context, _) {
+        final items = _view == 'favorit' ? state.favorites : state.history;
+        return ListView(
       padding: const EdgeInsets.fromLTRB(18, 16, 18, 28),
       children: [
         Container(
@@ -72,6 +75,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                 child: WordCard(entry: entry, state: state, onOpen: () => _openEntry(entry), showExample: false),
               )),
       ],
+    );
+      },
     );
   }
 }

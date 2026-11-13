@@ -95,25 +95,31 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         const SizedBox(height: 22),
         SectionHeading('Terakhir dicari', action: 'Buka kamus', onAction: widget.onOpenDictionary),
-        if (state.recentSearches.isEmpty)
-          Text('Kata yang kamu cari akan muncul di sini.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant))
-        else
-          SizedBox(
-            height: 42,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: state.recentSearches.length,
-              separatorBuilder: (_, _) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                final entry = state.recentSearches[index];
-                return ActionChip(
-                  avatar: const Icon(Icons.history_rounded, size: 16),
-                  label: Text(entry.word),
-                  onPressed: () => _openWord(entry),
-                );
-              },
-            ),
-          ),
+        ListenableBuilder(
+          listenable: state,
+          builder: (context, _) {
+            final recent = state.recentSearches;
+            if (recent.isEmpty) {
+              return Text('Kata yang kamu cari akan muncul di sini.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: colors.onSurfaceVariant));
+            }
+            return SizedBox(
+              height: 42,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: recent.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final entry = recent[index];
+                  return ActionChip(
+                    avatar: const Icon(Icons.history_rounded, size: 16),
+                    label: Text(entry.word),
+                    onPressed: () => _openWord(entry),
+                  );
+                },
+              ),
+            );
+          },
+        ),
         const SizedBox(height: 18),
         SectionHeading('Jelajahi kategori', action: 'Lihat semua', onAction: widget.onOpenCategories),
         SizedBox(
@@ -124,7 +130,7 @@ class _HomeScreenState extends State<HomeScreen> {
             separatorBuilder: (_, _) => const SizedBox(width: 10),
             itemBuilder: (context, index) {
               final category = state.categories[index];
-              final count = state.entries.where((entry) => entry.categoryId == category.id).length;
+              final count = state.countForCategory(category.id);
               return SizedBox(
                 width: 150,
                 child: Card(

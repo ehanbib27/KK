@@ -52,13 +52,16 @@ class DictionaryEntry {
       };
 
   bool matches(String query) {
-    final q = query.trim().toLowerCase();
-    if (q.isEmpty) return true;
-    return word.toLowerCase().contains(q) ||
-        meaning.toLowerCase().contains(q) ||
-        example.toLowerCase().contains(q) ||
-        translation.toLowerCase().contains(q) ||
-        dialect.toLowerCase().contains(q) ||
-        partOfSpeech.toLowerCase().contains(q);
+    return matchesNormalized(query.trim().toLowerCase());
+  }
+
+  bool matchesNormalized(String normalizedQuery) {
+    if (normalizedQuery.isEmpty) return true;
+    return word.toLowerCase().contains(normalizedQuery) ||
+        meaning.toLowerCase().contains(normalizedQuery) ||
+        example.toLowerCase().contains(normalizedQuery) ||
+        translation.toLowerCase().contains(normalizedQuery) ||
+        dialect.toLowerCase().contains(normalizedQuery) ||
+        partOfSpeech.toLowerCase().contains(normalizedQuery);
   }
 }

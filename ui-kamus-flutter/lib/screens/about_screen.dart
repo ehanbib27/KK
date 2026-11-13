@@ -85,10 +85,16 @@ class AboutScreen extends StatelessWidget {
           Text('Punya kata atau ungkapan lain? Simpan usulan kosakata di perangkat untuk ditinjau kemudian.', style: TextStyle(color: colors.onSurfaceVariant, height: 1.5)),
           const SizedBox(height: 14),
           FilledButton.icon(onPressed: () => _showSuggestionDialog(context), icon: const Icon(Icons.add_comment_rounded), label: const Text('Usulkan kosakata')),
-          if (state.suggestions.isNotEmpty) ...[
-            const SizedBox(height: 12),
-            Text('${state.suggestions.length} usulan tersimpan secara lokal', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: colors.secondary)),
-          ],
+          ListenableBuilder(
+            listenable: state,
+            builder: (context, _) {
+              if (state.suggestions.isEmpty) return const SizedBox.shrink();
+              return Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text('${state.suggestions.length} usulan tersimpan secara lokal', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: colors.secondary)),
+              );
+            },
+          ),
         ]))),
         const SizedBox(height: 16),
         Center(child: Text('Kamus Kutai · Versi Flutter', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: colors.onSurfaceVariant))),
